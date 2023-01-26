@@ -1,81 +1,54 @@
 import _, { debounce } from 'lodash';
 import './css/styles.css';
-import { fetchCountries } from './fetchCountries.js';
 import Notiflix from 'notiflix';
+import axios from 'axios';
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
 
-const input = document.querySelector('#search-box');
-const countryList = document.querySelector('.country-list');
-const countryInfo = document.querySelector('.country-info');
+const form = document.querySelector('#search-form');
+const gallery = document.querySelector('.gallery');
 
-const DEBOUNCE_DELAY = 300;
+// largeImageURL - link do dużego obrazka.
 
-input.addEventListener('input', debounce(eventHandler, DEBOUNCE_DELAY));
-input.addEventListener('keydown', debounce(clear, DEBOUNCE_DELAY));
+const getData = async output => {
+  const res = await axios.get(
+    `https://pixabay.com/api/?key=33147490-9fc73efc70912b9906c0b3bde&q=${output}&image_type=photo&orientation=horizontal&safesearch=true`
+  );
+  return res.data;
+};
 
-function eventHandler() {
-  const name = input.value;
-  fetchCountries(name.trim())
-    .then(countries => {
-      if (countries.length === 1) {
-        clearHTML();
-        renderCountry(countries);
-      } else if (countries.length > 10) {
-        Notiflix.Notify.info(
-          'Too many matches found. Please enter a more specific name.'
-        );
-      } else if (countries.length >= 2 && countries.length <= 10) {
-        renderCountryList(countries);
-      } else if (countries.length !== 0) {
-        Notiflix.Notify.failure('Oops, there is no country with that name');
-        clearHTML();
-      }
-    })
+form.addEventListener('submit', eventHandler);
 
-    .catch(error => console.log('Mam błąd', error));
+function eventHandler(event) {
+  event.preventDefault();
+  const name = event.target[0].value;
+  getData(name).then(res => {
+    renderGallery(res);
+  });
 }
 
-//funkcja do wyświetlania
-
-function renderCountry(countries) {
-  const countriesInfo = countries
-    .map(countries => {
-      const language = Object.values(countries.languages[0]);
-      return `
-        <div>
-          <img src="${countries.flags['svg']}" alt="${countries.name}" > 
-          <p>${countries.name}</p> 
-        </div>
-          <p><b>Capital</b>: ${countries.capital}</p>
-          <p><b>Population</b>: ${countries.population}</p>
-          <p><b>Languages</b>: ${language}</p>
+function renderGallery(res) {
+  const imgCard = res.hits
+    .map(el => {
+      return `<div class="photo-card">
+    <img src=${el.webformatURL} alt="${el.tags}" loading="lazy" />
+    <div class="info">
+      <p class="info-item">
+        <b>Likes ${el.likes}</b>
+      </p>
+      <p class="info-item">
+        <b>Views ${el.views}</b>
+      </p>
+      <p class="info-item">
+        <b>Comments ${el.comments}</b>
+      </p>
+      <p class="info-item">
+        <b>Downloads ${el.downloads}</b>
+      </p>
+    </div>
+    </div>
     `;
     })
     .join('');
-  countryInfo.innerHTML = countriesInfo;
-}
-
-function renderCountryList(countries) {
-  const countriesList = countries
-    .map(countries => {
-      return `
-          <li><img src="${countries.flags['svg']}" alt="${countries.name}"> ${countries.name}
-          </li>
-      `;
-    })
-    .join('');
-  countryList.innerHTML = countriesList;
-}
-
-//funkcja czyszcząca
-
-function clear(event) {
-  const key = event.key;
-  if (key === 'Backspace' || key === 'Delete') {
-    return clearHTML();
-  }
-}
-
-function clearHTML() {
-  countryList.innerHTML = '';
-  countryInfo.innerHTML = '';
+  gallery.innerHTML = imgCard;
 }
