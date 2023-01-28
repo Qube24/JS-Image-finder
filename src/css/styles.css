@@ -68,6 +68,7 @@ body {
   gap: 10px;
   justify-content: space-around;
   border: 2px dotted #559af5;
+  background-color: rgb(227, 241, 210);
 }
 
 .info-item {
