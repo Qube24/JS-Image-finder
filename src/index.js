@@ -24,7 +24,7 @@ let lightbox = new SimpleLightbox('.bigPhoto', {
   captionDelay: 250,
 });
 
-// event listener
+// event listeners
 
 form.addEventListener('submit', eventHandler);
 loadBtn.addEventListener('click', eventLoader);
